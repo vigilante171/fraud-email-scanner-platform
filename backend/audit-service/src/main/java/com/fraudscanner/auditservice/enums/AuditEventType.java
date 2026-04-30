@@ -1,0 +1,13 @@
+package com.fraudscanner.auditservice.enums;
+
+public enum AuditEventType {
+    EMAIL_SCANNED,
+    EMAIL_FLAGGED,
+    EMAIL_CONFIRMED_FRAUD,
+    EMAIL_MARKED_FALSE_POSITIVE,
+    EMAIL_RESCANNED,
+    USER_LOGIN,
+    USER_REGISTERED,
+    FEEDBACK_SUBMITTED,
+    ML_RETRAIN_TRIGGERED
+}
