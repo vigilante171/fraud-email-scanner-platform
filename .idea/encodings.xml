@@ -8,5 +8,6 @@
     <file url="file://$PROJECT_DIR$/backend/auth-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/backend/discovery-service/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/backend/discovery-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/backend/scanner-service/src/main/java" charset="UTF-8" />
   </component>
 </project>

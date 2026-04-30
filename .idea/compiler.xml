@@ -11,6 +11,7 @@
         <module name="auth-service" />
         <module name="audit-service" />
         <module name="discovery-service" />
+        <module name="scanner-service" />
       </profile>
     </annotationProcessing>
   </component>
@@ -20,6 +21,7 @@
       <module name="audit-service" options="-parameters" />
       <module name="auth-service" options="-parameters" />
       <module name="discovery-service" options="-parameters" />
+      <module name="scanner-service" options="-parameters" />
     </option>
   </component>
 </project>
