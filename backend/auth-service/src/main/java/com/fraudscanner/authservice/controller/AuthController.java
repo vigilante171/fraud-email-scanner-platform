@@ -32,5 +32,11 @@ public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest reque
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("Auth Service is running");
     }
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout() {
+        // In stateless JWT, logout just means the client deletes the token.
+        return ResponseEntity.ok("Logged out successfully");
+    }
+
 }
 
