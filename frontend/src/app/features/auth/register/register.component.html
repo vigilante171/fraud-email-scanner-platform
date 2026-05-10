@@ -1,0 +1,101 @@
+<section class="auth-screen">
+  <div class="auth-container">
+    <aside class="auth-brand-panel register-panel">
+      <div class="brand-top">
+        <div class="brand-mark">
+          <i class="bi bi-fingerprint"></i>
+        </div>
+        <span>Fraud Email Scanner</span>
+      </div>
+
+      <div class="brand-content">
+        <span class="brand-label">Create Workspace</span>
+        <h1>Start building your email fraud monitoring environment.</h1>
+        <p>
+          Create an account to scan suspicious emails, review risk scores, and investigate flagged senders.
+        </p>
+      </div>
+
+      <div class="brand-footer">
+        <div>
+          <strong>JWT</strong>
+          <span>Secure access</span>
+        </div>
+        <div>
+          <strong>Audit</strong>
+          <span>Activity tracking</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="auth-form-panel">
+      <div class="form-card">
+        <div class="form-header">
+          <span class="form-icon">
+            <i class="bi bi-person-plus-fill"></i>
+          </span>
+          <h2>Create Account</h2>
+          <p>Register to access the scanner dashboard.</p>
+        </div>
+
+        <div *ngIf="errorMessage" class="auth-alert">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <div *ngIf="successMessage" class="auth-alert success">
+          <i class="bi bi-check-circle-fill"></i>
+          <span>{{ successMessage }}</span>
+        </div>
+
+        <form #registerForm="ngForm" (ngSubmit)="register(registerForm)" class="auth-form">
+          <div class="field">
+            <label>Full Name</label>
+            <input
+              type="text"
+              [(ngModel)]="form.fullName"
+              name="fullName"
+              placeholder="Mehdi Chebaane"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label>Email</label>
+            <input
+              type="email"
+              [(ngModel)]="form.email"
+              name="email"
+              placeholder="you@example.com"
+              required
+              email
+            />
+          </div>
+
+          <div class="field">
+            <label>Password</label>
+            <input
+              type="password"
+              [(ngModel)]="form.password"
+              name="password"
+              placeholder="Minimum 6 characters"
+              required
+              minlength="6"
+            />
+            <small>Use at least 6 characters.</small>
+          </div>
+
+          <button type="submit" class="submit-btn" [disabled]="registerForm.invalid">
+            Register
+            <i class="bi bi-arrow-right-short"></i>
+          </button>
+        </form>
+
+        <div class="switch-link">
+          <span>Already have an account?</span>
+          <a routerLink="/login">Login</a>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>

@@ -1,0 +1,225 @@
+<section class="scan-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">AI Email Analysis</span>
+      <h1>Scan Suspicious Email</h1>
+      <p>
+        Analyze an email using both the rule-based engine and the ML fraud prediction service.
+      </p>
+    </div>
+  </div>
+
+  <div class="scan-grid">
+    <article class="scan-card">
+      <div class="card-header-custom">
+        <div>
+          <h3>Email Content</h3>
+          <p>Paste the suspicious email information below.</p>
+        </div>
+
+        <div class="header-icon">
+          <i class="bi bi-envelope-paper-fill"></i>
+        </div>
+      </div>
+
+      <div *ngIf="errorMessage" class="alert alert-danger">
+        {{ errorMessage }}
+      </div>
+
+      <form (ngSubmit)="scanEmail()" class="scan-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sender Email</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="form.sender"
+              name="sender"
+              placeholder="security-alert@fake-bank.xyz"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Receiver Email</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="form.receiverEmail"
+              name="receiverEmail"
+              placeholder="user@example.com"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Subject</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="form.subject"
+            name="subject"
+            placeholder="Urgent: Verify your account immediately"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Email Body</label>
+          <textarea
+            class="form-control email-body"
+            [(ngModel)]="form.body"
+            name="body"
+            placeholder="Paste the email body here..."
+            required
+          ></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="primary-btn" type="submit" [disabled]="loading">
+            <span *ngIf="!loading">
+              <i class="bi bi-cpu-fill"></i>
+              Run AI Scan
+            </span>
+
+            <span *ngIf="loading">
+              <span class="spinner-border spinner-border-sm me-2"></span>
+              Scanning...
+            </span>
+          </button>
+
+          <button class="secondary-btn" type="button" (click)="resetForm()">
+            Reset
+          </button>
+        </div>
+      </form>
+    </article>
+
+    <article class="result-card">
+      <div class="empty-state" *ngIf="!result">
+        <div class="empty-icon">
+          <i class="bi bi-robot"></i>
+        </div>
+
+        <h3>No AI result yet</h3>
+        <p>Run a scan to see rule-based and machine learning analysis.</p>
+      </div>
+
+      <div *ngIf="result" class="result-content">
+        <div class="result-header">
+          <div>
+            <span class="mini-label">Final Decision</span>
+            <h2>{{ result.status }}</h2>
+          </div>
+
+          <span class="decision-pill" [ngClass]="getStatusClass(result.status)">
+            {{ result.riskLevel }}
+          </span>
+        </div>
+
+        <div class="final-score-card">
+          <span>Final Risk Score</span>
+          <strong>{{ result.finalRiskScore || result.riskScore }}</strong>
+
+          <div class="score-track">
+            <div
+              class="score-fill"
+              [ngClass]="getStatusClass(result.status)"
+              [style.width]="getScoreWidth(result.finalRiskScore || result.riskScore)"
+            ></div>
+          </div>
+        </div>
+
+        <div class="ai-breakdown">
+          <div class="breakdown-card">
+            <div class="breakdown-icon rule">
+              <i class="bi bi-sliders"></i>
+            </div>
+
+            <div>
+              <span>Rule Engine Score</span>
+              <strong>{{ result.ruleRiskScore ?? result.riskScore }}</strong>
+            </div>
+          </div>
+
+          <div class="breakdown-card">
+            <div class="breakdown-icon ml">
+              <i class="bi bi-cpu-fill"></i>
+            </div>
+
+            <div>
+              <span>ML Fraud Probability</span>
+              <strong>{{ getMlProbabilityPercent() }}%</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="ml-panel">
+          <div class="ml-panel-header">
+            <div>
+              <span class="mini-label">Machine Learning Result</span>
+              <h3>{{ result.mlPrediction || 'N/A' }}</h3>
+            </div>
+
+            <span class="decision-pill" [ngClass]="getRiskClass(result.mlRiskLevel)">
+              {{ result.mlRiskLevel || 'UNKNOWN' }}
+            </span>
+          </div>
+
+          <div class="model-version">
+            <i class="bi bi-box-seam"></i>
+            Model version:
+            <strong>{{ result.mlModelVersion || 'N/A' }}</strong>
+          </div>
+        </div>
+
+        <div class="reasons-box">
+          <h4>Combined Detection Reasons</h4>
+
+          <ul *ngIf="result.reasons?.length; else noReasons">
+            <li *ngFor="let reason of result.reasons">
+              <i
+                class="bi"
+                [ngClass]="reason.startsWith('[ML]') ? 'bi-cpu-fill ml-reason' : 'bi-exclamation-circle-fill rule-reason'"
+              ></i>
+              {{ reason }}
+            </li>
+          </ul>
+
+          <ng-template #noReasons>
+            <p>No specific suspicious reason detected.</p>
+          </ng-template>
+        </div>
+
+        <div class="ml-reasons-box" *ngIf="result.mlReasons?.length">
+          <h4>ML Reasons Only</h4>
+
+          <ul>
+            <li *ngFor="let reason of result.mlReasons">
+              <i class="bi bi-cpu-fill"></i>
+              {{ reason }}
+            </li>
+          </ul>
+        </div>
+
+        <div class="result-meta">
+          <div>
+            <span>Email ID</span>
+            <strong>#{{ result.emailId }}</strong>
+          </div>
+
+          <div>
+            <span>Scan ID</span>
+            <strong>#{{ result.scanId }}</strong>
+          </div>
+        </div>
+
+        <a class="details-link" [routerLink]="['/emails', result.emailId]">
+          View Email Details
+          <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </article>
+  </div>
+</section>

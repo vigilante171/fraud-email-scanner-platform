@@ -1,16 +1,23 @@
 package com.fraudscanner.scannerservice.service;
 
 import com.fraudscanner.scannerservice.client.AuditServiceClient;
+import com.fraudscanner.scannerservice.client.MlServiceClient;
 import com.fraudscanner.scannerservice.dto.AuditLogRequest;
 import com.fraudscanner.scannerservice.dto.EmailScanRequest;
+import com.fraudscanner.scannerservice.dto.MlPredictionRequest;
+import com.fraudscanner.scannerservice.dto.MlPredictionResponse;
 import com.fraudscanner.scannerservice.dto.ScanResponse;
 import com.fraudscanner.scannerservice.entity.EmailMessage;
 import com.fraudscanner.scannerservice.entity.ScanResult;
 import com.fraudscanner.scannerservice.enums.AuditEventType;
 import com.fraudscanner.scannerservice.enums.EmailStatus;
+import com.fraudscanner.scannerservice.enums.RiskLevel;
 import com.fraudscanner.scannerservice.repository.EmailMessageRepository;
 import com.fraudscanner.scannerservice.repository.ScanResultRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class EmailScanService {
@@ -19,21 +26,25 @@ public class EmailScanService {
     private final ScanResultRepository scanResultRepository;
     private final RuleDetectionService ruleDetectionService;
     private final AuditServiceClient auditServiceClient;
+    private final MlServiceClient mlServiceClient;
 
     public EmailScanService(
             EmailMessageRepository emailMessageRepository,
             ScanResultRepository scanResultRepository,
             RuleDetectionService ruleDetectionService,
-            AuditServiceClient auditServiceClient
+            AuditServiceClient auditServiceClient,
+            MlServiceClient mlServiceClient
     ) {
         this.emailMessageRepository = emailMessageRepository;
         this.scanResultRepository = scanResultRepository;
         this.ruleDetectionService = ruleDetectionService;
         this.auditServiceClient = auditServiceClient;
+        this.mlServiceClient = mlServiceClient;
     }
 
     public ScanResponse scanEmail(EmailScanRequest request) {
-        // Build and save EmailMessage
+
+        // 1. Save email message
         EmailMessage savedEmail = emailMessageRepository.save(
                 EmailMessage.builder()
                         .sender(request.getSender())
@@ -44,50 +55,130 @@ public class EmailScanService {
                         .build()
         );
 
-        // Run detection
+        // 2. Run rule-based detection
         RuleDetectionService.DetectionResult detectionResult = ruleDetectionService.analyze(
                 request.getSender(),
                 request.getSubject(),
                 request.getBody()
         );
 
-        String reasonsAsText = String.join(" | ", detectionResult.getReasons());
+        int ruleRiskScore = detectionResult.getRiskScore();
 
-        // Build and save ScanResult
+        // 3. Call ML service
+        MlPredictionResponse mlPrediction = mlServiceClient.predict(
+                MlPredictionRequest.builder()
+                        .sender(request.getSender())
+                        .subject(request.getSubject())
+                        .body(request.getBody())
+                        .build()
+        );
+
+        // 4. Combine rule score + ML score
+        int finalRiskScore = calculateFinalRiskScore(
+                ruleRiskScore,
+                mlPrediction.getFraudProbability()
+        );
+
+        EmailStatus finalStatus = calculateFinalStatus(finalRiskScore);
+        RiskLevel finalRiskLevel = calculateFinalRiskLevel(finalRiskScore);
+
+        // 5. Merge rule reasons + ML reasons
+        List<String> combinedReasons = new ArrayList<>();
+
+        if (detectionResult.getReasons() != null) {
+            combinedReasons.addAll(detectionResult.getReasons());
+        }
+
+        if (mlPrediction.getReasons() != null) {
+            mlPrediction.getReasons().forEach(reason ->
+                    combinedReasons.add("[ML] " + reason)
+            );
+        }
+
+        String reasonsAsText = String.join(" | ", combinedReasons);
+
+        // 6. Save final scan result
         ScanResult savedScanResult = scanResultRepository.save(
                 ScanResult.builder()
-                        .riskScore(detectionResult.getRiskScore())
-                        .riskLevel(detectionResult.getRiskLevel())
-                        .status(detectionResult.getStatus())
+                        .riskScore(finalRiskScore)
+                        .riskLevel(finalRiskLevel)
+                        .status(finalStatus)
                         .reasons(reasonsAsText)
                         .emailMessage(savedEmail)
                         .build()
         );
 
-        // Build AuditLogRequest
+        // 7. Send audit log
         AuditLogRequest auditLogRequest = AuditLogRequest.builder()
                 .emailId(savedEmail.getId())
                 .userId(null)
-                .eventType(detectionResult.getStatus() == EmailStatus.FLAGGED
+                .eventType(finalStatus == EmailStatus.FLAGGED
                         ? AuditEventType.EMAIL_FLAGGED
                         : AuditEventType.EMAIL_SCANNED)
                 .performedBy("scanner-service")
-                .details(detectionResult.getStatus() == EmailStatus.FLAGGED
-                        ? "Email flagged with risk score " + detectionResult.getRiskScore()
-                        : "Email scanned with status " + detectionResult.getStatus())
+                .details(finalStatus == EmailStatus.FLAGGED
+                        ? "Email flagged with final risk score " + finalRiskScore
+                        : "Email scanned with final status " + finalStatus + " and final risk score " + finalRiskScore)
                 .build();
 
         auditServiceClient.createAuditLog(auditLogRequest);
 
-        // Build ScanResponse
+        // 8. Return enhanced response to frontend
         return ScanResponse.builder()
                 .emailId(savedEmail.getId())
                 .scanId(savedScanResult.getId())
-                .status(detectionResult.getStatus())
-                .riskLevel(detectionResult.getRiskLevel())
-                .riskScore(detectionResult.getRiskScore())
-                .reasons(detectionResult.getReasons())
+
+                // final decision
+                .status(finalStatus)
+                .riskLevel(finalRiskLevel)
+                .riskScore(finalRiskScore)
+                .reasons(combinedReasons)
                 .scannedAt(savedScanResult.getScannedAt())
+
+                // ML fields
+                .mlFraudProbability(mlPrediction.getFraudProbability())
+                .mlPrediction(mlPrediction.getPrediction())
+                .mlRiskLevel(mlPrediction.getRiskLevel())
+                .mlModelVersion(mlPrediction.getModelVersion())
+                .mlReasons(mlPrediction.getReasons())
+
+                // scoring fields
+                .ruleRiskScore(ruleRiskScore)
+                .finalRiskScore(finalRiskScore)
+
                 .build();
+    }
+
+    private int calculateFinalRiskScore(int ruleScore, Double mlProbability) {
+        int mlScore = mlProbability == null
+                ? 0
+                : (int) Math.round(mlProbability * 100);
+
+        // 60% rule engine + 40% ML prediction
+        return (int) Math.round((ruleScore * 0.6) + (mlScore * 0.4));
+    }
+
+    private EmailStatus calculateFinalStatus(int finalScore) {
+        if (finalScore >= 70) {
+            return EmailStatus.FLAGGED;
+        }
+
+        if (finalScore >= 40) {
+            return EmailStatus.SUSPICIOUS;
+        }
+
+        return EmailStatus.SAFE;
+    }
+
+    private RiskLevel calculateFinalRiskLevel(int finalScore) {
+        if (finalScore >= 70) {
+            return RiskLevel.HIGH;
+        }
+
+        if (finalScore >= 40) {
+            return RiskLevel.MEDIUM;
+        }
+
+        return RiskLevel.LOW;
     }
 }

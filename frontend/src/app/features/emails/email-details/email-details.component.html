@@ -1,0 +1,103 @@
+<section class="details-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">Threat Investigation</span>
+      <h1>Email Details</h1>
+      <p>Review the full scanned email content, sender metadata, and detection reasons.</p>
+    </div>
+
+    <a routerLink="/emails" class="back-btn">
+      <i class="bi bi-arrow-left"></i>
+      Back to Emails
+    </a>
+  </div>
+
+  <div *ngIf="loading" class="loading-card">
+    <span class="spinner-border spinner-border-sm me-2"></span>
+    Loading email details...
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <ng-container *ngIf="email && !loading">
+    <div class="details-grid">
+      <article class="details-card main-email">
+        <div class="email-header">
+          <div>
+            <span class="status-pill" [ngClass]="getStatusClass()">
+              {{ value('status', 'scanResult.status') }}
+            </span>
+
+            <h2>{{ value('subject', 'email.subject') }}</h2>
+          </div>
+
+          <div class="score-box">
+            <span>Risk Score</span>
+            <strong>{{ value('riskScore', 'scanResult.riskScore') }}</strong>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div>
+            <span>Sender</span>
+            <strong>{{ value('sender', 'senderEmail', 'email.sender') }}</strong>
+          </div>
+
+          <div>
+            <span>Receiver</span>
+            <strong>{{ value('receiverEmail', 'email.receiverEmail') }}</strong>
+          </div>
+
+          <div>
+            <span>Risk Level</span>
+            <strong>{{ value('riskLevel', 'scanResult.riskLevel') }}</strong>
+          </div>
+
+          <div>
+            <span>Received At</span>
+            <strong>{{ value('receivedAt', 'email.receivedAt') | date:'short' }}</strong>
+          </div>
+        </div>
+
+        <div class="body-box">
+          <h3>Email Body</h3>
+          <pre>{{ value('body', 'email.body') }}</pre>
+        </div>
+      </article>
+
+      <aside class="details-card side-panel">
+        <h3>Detection Reasons</h3>
+
+        <ul *ngIf="reasons().length; else noReasons">
+          <li *ngFor="let reason of reasons()">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            {{ reason }}
+          </li>
+        </ul>
+
+        <ng-template #noReasons>
+          <p class="text-muted">No detection reasons available.</p>
+        </ng-template>
+
+        <div class="mini-info">
+          <div>
+            <span>Email ID</span>
+            <strong>#{{ value('id', 'emailId') }}</strong>
+          </div>
+
+          <div>
+            <span>Scan ID</span>
+            <strong>#{{ value('scanId', 'scanResult.id') }}</strong>
+          </div>
+
+          <div>
+            <span>Scanned At</span>
+            <strong>{{ value('scannedAt', 'scanResult.scannedAt') | date:'short' }}</strong>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </ng-container>
+</section>

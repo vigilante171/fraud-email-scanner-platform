@@ -1,0 +1,157 @@
+<section class="dashboard-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">Live Overview</span>
+      <h1>Email Fraud Monitoring</h1>
+      <p>Track scanned emails, suspicious activity, risk levels, and flagged senders.</p>
+    </div>
+
+    <button class="refresh-btn" (click)="loadDashboard()">
+      <i class="bi bi-arrow-clockwise"></i>
+      Refresh
+    </button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="loading-card">
+    <div class="spinner-border spinner-border-sm me-2"></div>
+    Loading dashboard data...
+  </div>
+
+  <div class="kpi-grid">
+    <article class="kpi-card primary">
+      <div class="kpi-icon">
+        <i class="bi bi-envelope-check-fill"></i>
+      </div>
+
+      <div>
+        <span>Total Emails</span>
+        <strong>{{ getMetric(summary?.totalEmails || summary?.totalScans) }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card danger">
+      <div class="kpi-icon">
+        <i class="bi bi-exclamation-octagon-fill"></i>
+      </div>
+
+      <div>
+        <span>Flagged Emails</span>
+        <strong>{{ getMetric(summary?.flaggedEmails) }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card warning">
+      <div class="kpi-icon">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+      </div>
+
+      <div>
+        <span>Suspicious Emails</span>
+        <strong>{{ getMetric(summary?.suspiciousEmails) }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card success">
+      <div class="kpi-icon">
+        <i class="bi bi-shield-check"></i>
+      </div>
+
+      <div>
+        <span>Safe Emails</span>
+        <strong>{{ getMetric(summary?.safeEmails) }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card dark">
+      <div class="kpi-icon">
+        <i class="bi bi-speedometer2"></i>
+      </div>
+
+      <div>
+        <span>Average Risk Score</span>
+        <strong>{{ getAverageRisk() }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <div class="analytics-grid">
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Email Status Distribution</h3>
+          <p>Safe, suspicious, and flagged classification.</p>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        <canvas id="statusChart"></canvas>
+      </div>
+    </article>
+
+    <article class="panel">
+      <div class="panel-header">
+        <div>
+          <h3>Risk Level Distribution</h3>
+          <p>Grouped by calculated fraud risk level.</p>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        <canvas id="riskChart"></canvas>
+      </div>
+    </article>
+  </div>
+
+  <article class="panel">
+    <div class="panel-header">
+      <div>
+        <h3>Top Flagged Senders</h3>
+        <p>Senders producing the highest number of flagged emails.</p>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Sender</th>
+            <th>Flagged Count</th>
+            <th>Risk Signal</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let sender of topSenders; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>
+              <div class="sender-cell">
+                <div class="sender-avatar">
+                  <i class="bi bi-person-fill-exclamation"></i>
+                </div>
+
+                <span>{{ getSenderName(sender) }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="count-pill">{{ sender.count }}</span>
+            </td>
+            <td>
+              <span class="risk-pill">High attention</span>
+            </td>
+          </tr>
+
+          <tr *ngIf="!topSenders.length && !loading">
+            <td colspan="4" class="text-center text-muted py-4">
+              No flagged senders found yet.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

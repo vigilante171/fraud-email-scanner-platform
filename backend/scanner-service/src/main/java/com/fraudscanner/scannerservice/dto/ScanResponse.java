@@ -24,4 +24,19 @@ public class ScanResponse {
     private Integer riskScore;
     private List<String> reasons;
     private LocalDateTime scannedAt;
+
+    private Double mlFraudProbability;
+
+    private String mlPrediction;
+
+    private String mlRiskLevel;
+
+    private String mlModelVersion;
+
+    private List<String> mlReasons;
+
+    private Integer ruleRiskScore;
+
+    private Integer finalRiskScore;
+
 }

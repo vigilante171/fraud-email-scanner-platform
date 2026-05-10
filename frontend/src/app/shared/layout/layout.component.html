@@ -1,0 +1,80 @@
+<ng-container *ngIf="isLoggedIn(); else authOnly">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="bi bi-shield-lock-fill"></i>
+        </div>
+
+        <div>
+          <h1>Fraud Scanner</h1>
+          <p>Email Security Console</p>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a routerLink="/dashboard" routerLinkActive="active">
+          <i class="bi bi-grid-1x2-fill"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <a routerLink="/scan-email" routerLinkActive="active">
+          <i class="bi bi-search-heart-fill"></i>
+          <span>Scan Email</span>
+        </a>
+
+        <a routerLink="/emails" routerLinkActive="active">
+          <i class="bi bi-envelope-exclamation-fill"></i>
+          <span>Flagged Emails</span>
+        </a>
+
+        <a routerLink="/audit-logs" routerLinkActive="active">
+          <i class="bi bi-clock-history"></i>
+          <span>Audit Logs</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-card">
+          <div class="avatar">
+            <i class="bi bi-person-fill"></i>
+          </div>
+
+          <div>
+            <strong>{{ getUserEmail() || 'User' }}</strong>
+            <span>{{ getUserRole() || 'USER' }}</span>
+          </div>
+        </div>
+
+        <button class="logout-btn" (click)="logout()">
+          <i class="bi bi-box-arrow-left"></i>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <section class="main-area">
+      <header class="topbar">
+        <div>
+          <h2>Security Dashboard</h2>
+          <p>Monitor scans, fraud signals, and suspicious email activity.</p>
+        </div>
+
+        <div class="topbar-actions">
+          <a routerLink="/scan-email" class="scan-btn">
+            <i class="bi bi-plus-circle"></i>
+            New Scan
+          </a>
+        </div>
+      </header>
+
+      <main class="content">
+        <router-outlet></router-outlet>
+      </main>
+    </section>
+  </div>
+</ng-container>
+
+<ng-template #authOnly>
+  <router-outlet></router-outlet>
+</ng-template>

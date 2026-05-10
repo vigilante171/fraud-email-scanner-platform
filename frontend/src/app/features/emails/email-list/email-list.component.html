@@ -1,0 +1,106 @@
+<section class="emails-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">Threat Inbox</span>
+      <h1>Flagged Emails</h1>
+      <p>Review suspicious and high-risk emails detected by the scanner service.</p>
+    </div>
+
+    <button class="refresh-btn" (click)="loadFlaggedEmails()">
+      <i class="bi bi-arrow-clockwise"></i>
+      Refresh
+    </button>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="filterEmails()"
+        placeholder="Search by sender, subject, status..."
+      />
+    </div>
+
+    <a routerLink="/scan-email" class="new-scan-btn">
+      <i class="bi bi-plus-circle"></i>
+      New Scan
+    </a>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="loading-card">
+    <span class="spinner-border spinner-border-sm me-2"></span>
+    Loading flagged emails...
+  </div>
+
+  <article class="emails-panel">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Sender</th>
+            <th>Status</th>
+            <th>Risk</th>
+            <th>Date</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let email of filteredEmails">
+            <td>
+              <div class="subject-cell">
+                <div class="mail-icon">
+                  <i class="bi bi-envelope-exclamation-fill"></i>
+                </div>
+
+                <div>
+                  <strong>{{ getSubject(email) }}</strong>
+                  <span>#{{ getId(email) }}</span>
+                </div>
+              </div>
+            </td>
+
+            <td>{{ getSender(email) }}</td>
+
+            <td>
+              <span class="status-pill" [ngClass]="getStatusClass(getStatus(email))">
+                {{ getStatus(email) }}
+              </span>
+            </td>
+
+            <td>
+              <div class="risk-score">
+                <strong>{{ getRiskScore(email) }}</strong>
+                <span>{{ getRiskLevel(email) }}</span>
+              </div>
+            </td>
+
+            <td>{{ getDate(email) | date:'short' }}</td>
+
+            <td class="text-end">
+              <a class="details-btn" [routerLink]="['/emails', getId(email)]">
+                Details
+                <i class="bi bi-arrow-right"></i>
+              </a>
+            </td>
+          </tr>
+
+          <tr *ngIf="!filteredEmails.length && !loading">
+            <td colspan="6" class="empty-row">
+              <i class="bi bi-shield-check"></i>
+              <strong>No flagged emails found</strong>
+              <span>Run a new scan to populate this table.</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
