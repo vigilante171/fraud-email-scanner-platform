@@ -16,6 +16,7 @@ import { EmailDetailsComponent } from './features/emails/email-details/email-det
 import { AuditLogsComponent } from './features/audit/audit-logs/audit-logs.component';
 
 import { AuthTokenInterceptor } from './core/interceptors/auth-token.interceptor';
+import { UserManagementComponent } from './features/admin/user-management/user-management.component';
 
 @NgModule({
   declarations: [
@@ -28,6 +29,7 @@ import { AuthTokenInterceptor } from './core/interceptors/auth-token.interceptor
     EmailListComponent,
     EmailDetailsComponent,
     AuditLogsComponent,
+    UserManagementComponent,
   ],
   imports: [BrowserModule, AppRoutingModule, HttpClientModule, FormsModule],
   providers: [

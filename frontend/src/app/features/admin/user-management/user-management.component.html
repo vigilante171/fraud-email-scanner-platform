@@ -1,0 +1,257 @@
+<section class="users-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">Admin Control</span>
+      <h1>User Management</h1>
+      <p>Manage platform users, roles, and account access.</p>
+    </div>
+
+    <button class="refresh-btn" (click)="loadUsers()">
+      <i class="bi bi-arrow-clockwise"></i>
+      Refresh
+    </button>
+  </div>
+
+  <div class="kpi-grid">
+    <article class="kpi-card primary">
+      <div class="kpi-icon">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div>
+        <span>Total Users</span>
+        <strong>{{ getTotalUsers() }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card success">
+      <div class="kpi-icon">
+        <i class="bi bi-person-check-fill"></i>
+      </div>
+      <div>
+        <span>Active Users</span>
+        <strong>{{ getActiveUsers() }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card danger">
+      <div class="kpi-icon">
+        <i class="bi bi-shield-lock-fill"></i>
+      </div>
+      <div>
+        <span>Admins</span>
+        <strong>{{ getAdminUsers() }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card dark">
+      <div class="kpi-icon">
+        <i class="bi bi-person-x-fill"></i>
+      </div>
+      <div>
+        <span>Disabled</span>
+        <strong>{{ getDisabledUsers() }}</strong>
+      </div>
+    </article>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
+  <article *ngIf="editMode" class="edit-panel">
+    <div class="panel-header">
+      <div>
+        <h3>Edit User #{{ selectedUserId }}</h3>
+        <p>Update profile information and role assignment.</p>
+      </div>
+    </div>
+
+    <form class="edit-form" (ngSubmit)="saveUser()">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="editForm.fullName"
+            name="fullName"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Email</label>
+          <input
+            type="email"
+            class="form-control"
+            [(ngModel)]="editForm.email"
+            name="email"
+            required
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Role</label>
+        <select class="form-control" [(ngModel)]="editForm.role" name="role">
+          <option *ngFor="let role of roles" [value]="role">
+            {{ role }}
+          </option>
+        </select>
+      </div>
+
+      <div class="edit-actions">
+        <button class="save-btn" type="submit" [disabled]="saving">
+          {{ saving ? 'Saving...' : 'Save Changes' }}
+        </button>
+
+        <button class="cancel-btn" type="button" (click)="cancelEdit()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </article>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="applyFilters()"
+        placeholder="Search by name, email, role, or ID..."
+      />
+    </div>
+
+    <select
+      class="filter-select"
+      [(ngModel)]="selectedRole"
+      (ngModelChange)="applyFilters()"
+    >
+      <option value="ALL">All roles</option>
+      <option value="ADMIN">Admin</option>
+      <option value="ANALYST">Analyst</option>
+      <option value="USER">User</option>
+    </select>
+
+    <select
+      class="filter-select"
+      [(ngModel)]="selectedStatus"
+      (ngModelChange)="applyFilters()"
+    >
+      <option value="ALL">All statuses</option>
+      <option value="ACTIVE">Active</option>
+      <option value="DISABLED">Disabled</option>
+    </select>
+
+    <button class="clear-btn" (click)="clearFilters()">Clear</button>
+  </div>
+
+  <div *ngIf="loading" class="loading-card">
+    <span class="spinner-border spinner-border-sm me-2"></span>
+    Loading users...
+  </div>
+
+  <article class="users-panel">
+    <div class="panel-header">
+      <div>
+        <h3>Users List</h3>
+        <p>Promote, demote, disable, or delete users.</p>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Created At</th>
+            <th class="text-end">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let user of filteredUsers">
+            <td>
+              <div class="user-cell">
+                <div class="avatar">
+                  <i class="bi bi-person-fill"></i>
+                </div>
+
+                <div>
+                  <strong>{{ user.fullName }}</strong>
+                  <span>#{{ user.id }}</span>
+                </div>
+              </div>
+            </td>
+
+            <td>{{ user.email }}</td>
+
+            <td>
+              <span class="role-pill" [ngClass]="getRoleClass(user.role)">
+                {{ user.role }}
+              </span>
+            </td>
+
+            <td>
+              <span class="status-pill" [ngClass]="user.active ? 'active' : 'disabled'">
+                {{ user.active ? 'ACTIVE' : 'DISABLED' }}
+              </span>
+            </td>
+
+            <td>{{ user.createdAt | date:'short' }}</td>
+
+            <td class="text-end">
+              <div class="action-buttons">
+                <button class="edit-btn" (click)="openEdit(user)">Edit</button>
+
+                <button
+                  *ngIf="user.role !== 'ADMIN'"
+                  class="promote-btn"
+                  (click)="promoteToAdmin(user)"
+                >
+                  Promote
+                </button>
+
+                <button
+                  *ngIf="user.role === 'ADMIN'"
+                  class="demote-btn"
+                  (click)="demoteToUser(user)"
+                >
+                  Demote
+                </button>
+
+                <button
+                  class="status-btn"
+                  [ngClass]="user.active ? 'disable' : 'enable'"
+                  (click)="toggleStatus(user)"
+                >
+                  {{ user.active ? 'Disable' : 'Enable' }}
+                </button>
+
+                <button class="delete-btn" (click)="deleteUser(user)">
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <tr *ngIf="!filteredUsers.length && !loading">
+            <td colspan="6" class="empty-row">
+              <i class="bi bi-people"></i>
+              <strong>No users found</strong>
+              <span>Try clearing filters or refreshing the list.</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

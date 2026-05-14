@@ -39,9 +39,36 @@ public class JwtService {
         return extractClaims(token).getSubject();
     }
 
+    public String extractRole(String token) {
+        Object role = extractClaims(token).get("role");
+        return role == null ? null : role.toString();
+    }
+
+    public Long extractUserId(String token) {
+        Object userId = extractClaims(token).get("userId");
+
+        if (userId == null) {
+            return null;
+        }
+
+        if (userId instanceof Integer) {
+            return ((Integer) userId).longValue();
+        }
+
+        if (userId instanceof Long) {
+            return (Long) userId;
+        }
+
+        return Long.valueOf(userId.toString());
+    }
+
     public boolean isTokenValid(String token, String email) {
         String tokenEmail = extractEmail(token);
         return tokenEmail.equals(email) && !isTokenExpired(token);
+    }
+
+    public boolean isTokenValid(String token) {
+        return !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {

@@ -9,6 +9,7 @@ import { EmailListComponent } from './features/emails/email-list/email-list.comp
 import { EmailDetailsComponent } from './features/emails/email-details/email-details.component';
 import { AuditLogsComponent } from './features/audit/audit-logs/audit-logs.component';
 import { AuthGuard } from './core/guards/auth.guard';
+import { UserManagementComponent } from './features/admin/user-management/user-management.component';
 
 const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -39,6 +40,11 @@ const routes: Routes = [
   {
     path: 'audit-logs',
     component: AuditLogsComponent,
+    canActivate: [AuthGuard, AdminGuard],
+  },
+  {
+    path: 'admin/users',
+    component: UserManagementComponent,
     canActivate: [AuthGuard, AdminGuard],
   },
 
