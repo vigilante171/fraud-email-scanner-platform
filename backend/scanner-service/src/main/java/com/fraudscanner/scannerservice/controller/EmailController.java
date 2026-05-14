@@ -4,6 +4,7 @@ import com.fraudscanner.scannerservice.dto.EmailDetailsResponse;
 import com.fraudscanner.scannerservice.dto.EmailScanRequest;
 import com.fraudscanner.scannerservice.dto.EmailSummaryResponse;
 import com.fraudscanner.scannerservice.dto.ScanResponse;
+import com.fraudscanner.scannerservice.dto.UpdateEmailRequest;
 import com.fraudscanner.scannerservice.enums.EmailStatus;
 import com.fraudscanner.scannerservice.service.EmailQueryService;
 import com.fraudscanner.scannerservice.service.EmailScanService;
@@ -66,6 +67,26 @@ public class EmailController {
             @RequestParam(required = false, defaultValue = "USER") String role
     ) {
         return ResponseEntity.ok(emailQueryService.getEmailDetails(emailId, userId, role));
+    }
+
+    @PutMapping("/{emailId}")
+    public ResponseEntity<EmailDetailsResponse> updateEmail(
+            @PathVariable Long emailId,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false, defaultValue = "USER") String role,
+            @RequestBody UpdateEmailRequest request
+    ) {
+        return ResponseEntity.ok(emailQueryService.updateEmail(emailId, userId, role, request));
+    }
+
+    @DeleteMapping("/{emailId}")
+    public ResponseEntity<Void> deleteEmail(
+            @PathVariable Long emailId,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false, defaultValue = "USER") String role
+    ) {
+        emailQueryService.deleteEmail(emailId, userId, role);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/health")

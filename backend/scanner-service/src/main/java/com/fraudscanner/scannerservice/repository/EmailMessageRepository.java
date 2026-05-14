@@ -10,4 +10,5 @@ public interface EmailMessageRepository extends JpaRepository<EmailMessage, Long
     List<EmailMessage> findBySenderContainingIgnoreCase(String sender);
 
     List<EmailMessage> findBySubjectContainingIgnoreCase(String subject);
+    List<EmailMessage> findByUserId(Long userId);
 }

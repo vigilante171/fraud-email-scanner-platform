@@ -2,10 +2,13 @@ package com.fraudscanner.scannerservice.service;
 
 import com.fraudscanner.scannerservice.dto.EmailDetailsResponse;
 import com.fraudscanner.scannerservice.dto.EmailSummaryResponse;
+import com.fraudscanner.scannerservice.dto.UpdateEmailRequest;
 import com.fraudscanner.scannerservice.entity.EmailMessage;
 import com.fraudscanner.scannerservice.entity.ScanResult;
 import com.fraudscanner.scannerservice.enums.EmailStatus;
+import com.fraudscanner.scannerservice.repository.EmailMessageRepository;
 import com.fraudscanner.scannerservice.repository.ScanResultRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -15,9 +18,14 @@ import java.util.List;
 public class EmailQueryService {
 
     private final ScanResultRepository scanResultRepository;
+    private final EmailMessageRepository emailMessageRepository;
 
-    public EmailQueryService(ScanResultRepository scanResultRepository) {
+    public EmailQueryService(
+            ScanResultRepository scanResultRepository,
+            EmailMessageRepository emailMessageRepository
+    ) {
         this.scanResultRepository = scanResultRepository;
+        this.emailMessageRepository = emailMessageRepository;
     }
 
     public List<EmailSummaryResponse> getAllEmails(Long userId, String role) {
@@ -74,6 +82,57 @@ public class EmailQueryService {
                     .orElseThrow(() -> new RuntimeException("Email scan result not found or access denied"));
         }
 
+        return mapToDetails(scanResult);
+    }
+
+    public EmailDetailsResponse updateEmail(Long emailId, Long userId, String role, UpdateEmailRequest request) {
+        ScanResult scanResult;
+
+        if (isAdmin(role)) {
+            scanResult = scanResultRepository.findByEmailMessageId(emailId)
+                    .orElseThrow(() -> new RuntimeException("Email scan result not found"));
+        } else {
+            throw new RuntimeException("Only admins can update emails");
+        }
+
+        EmailMessage email = scanResult.getEmailMessage();
+
+        if (request.getSender() != null && !request.getSender().isBlank()) {
+            email.setSender(request.getSender().trim());
+        }
+
+        if (request.getReceiverEmail() != null && !request.getReceiverEmail().isBlank()) {
+            email.setReceiverEmail(request.getReceiverEmail().trim());
+        }
+
+        if (request.getSubject() != null && !request.getSubject().isBlank()) {
+            email.setSubject(request.getSubject().trim());
+        }
+
+        if (request.getBody() != null && !request.getBody().isBlank()) {
+            email.setBody(request.getBody());
+        }
+
+        emailMessageRepository.save(email);
+
+        return mapToDetails(scanResult);
+    }
+
+    @Transactional
+    public void deleteEmail(Long emailId, Long userId, String role) {
+        if (!isAdmin(role)) {
+            throw new RuntimeException("Only admins can delete emails");
+        }
+
+        if (!emailMessageRepository.existsById(emailId)) {
+            throw new RuntimeException("Email not found with id: " + emailId);
+        }
+
+        scanResultRepository.deleteByEmailMessageId(emailId);
+        emailMessageRepository.deleteById(emailId);
+    }
+
+    private EmailDetailsResponse mapToDetails(ScanResult scanResult) {
         EmailMessage email = scanResult.getEmailMessage();
 
         return EmailDetailsResponse.builder()
