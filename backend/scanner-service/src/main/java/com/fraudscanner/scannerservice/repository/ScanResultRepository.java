@@ -10,10 +10,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ScanResultRepository extends JpaRepository<ScanResult, Long> {
-
+    List<ScanResult> findByEmailMessageUserId(Long userId);
     Optional<ScanResult> findByEmailMessageId(Long emailId);
 
+    Optional<ScanResult> findByEmailMessageIdAndEmailMessageUserId(Long emailId, Long userId);
+
     List<ScanResult> findByStatus(EmailStatus status);
+
+    List<ScanResult> findByStatusAndEmailMessageUserId(EmailStatus status, Long userId);
 
     List<ScanResult> findByRiskLevel(RiskLevel riskLevel);
 

@@ -1,1 +1,187 @@
-<p>audit-logs works!</p>
+<section class="audit-page">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">System Traceability</span>
+      <h1>Audit Logs</h1>
+      <p>
+        Track fraud detection events, scanned emails, flagged messages, and
+        system activity.
+      </p>
+    </div>
+
+    <button class="refresh-btn" (click)="loadAuditLogs()">
+      <i class="bi bi-arrow-clockwise"></i>
+      Refresh
+    </button>
+  </div>
+
+  <div class="kpi-grid">
+    <article class="kpi-card primary">
+      <div class="kpi-icon">
+        <i class="bi bi-list-check"></i>
+      </div>
+
+      <div>
+        <span>Total Events</span>
+        <strong>{{ getTotalEvents() }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card info">
+      <div class="kpi-icon">
+        <i class="bi bi-envelope-check-fill"></i>
+      </div>
+
+      <div>
+        <span>Email Scanned</span>
+        <strong>{{ getScannedEvents() }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card danger">
+      <div class="kpi-icon">
+        <i class="bi bi-envelope-exclamation-fill"></i>
+      </div>
+
+      <div>
+        <span>Email Flagged</span>
+        <strong>{{ getFlaggedEvents() }}</strong>
+      </div>
+    </article>
+
+    <article class="kpi-card dark">
+      <div class="kpi-icon">
+        <i class="bi bi-clock-history"></i>
+      </div>
+
+      <div>
+        <span>Latest Event</span>
+        <strong class="date-value">
+          {{
+            getLatestEventDate()
+              ? (getLatestEventDate() | date: "short")
+              : "N/A"
+          }}
+        </strong>
+      </div>
+    </article>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <i class="bi bi-search"></i>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="filterLogs()"
+        placeholder="Search by event type, email ID, details..."
+      />
+    </div>
+
+    <select
+      class="event-filter"
+      [(ngModel)]="selectedEventType"
+      (ngModelChange)="filterLogs()"
+    >
+      <option value="ALL">All event types</option>
+      <option *ngFor="let type of eventTypes" [value]="type">
+        {{ type }}
+      </option>
+    </select>
+
+    <button class="clear-btn" (click)="clearFilters()">Clear</button>
+  </div>
+
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="loading" class="loading-card">
+    <span class="spinner-border spinner-border-sm me-2"></span>
+    Loading audit logs...
+  </div>
+
+  <article class="audit-panel">
+    <div class="panel-header">
+      <div>
+        <h3>Event History</h3>
+        <p>Chronological record of important security and scanner actions.</p>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Email ID</th>
+            <th>User ID</th>
+            <th>Performed By</th>
+            <th>Details</th>
+            <th>Date</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr *ngFor="let log of filteredLogs">
+            <td>
+              <span class="event-pill" [ngClass]="getEventClass(log)">
+                {{ getEventType(log) }}
+              </span>
+            </td>
+
+            <td>
+              <span class="id-pill"> #{{ getEmailId(log) }} </span>
+            </td>
+
+            <td>{{ getUserId(log) }}</td>
+
+            <td>
+              <div class="performed-cell">
+                <div class="performed-icon">
+                  <i class="bi bi-cpu-fill"></i>
+                </div>
+
+                <span>{{ getPerformedBy(log) }}</span>
+              </div>
+            </td>
+
+            <td class="details-cell">
+              {{ getDetails(log) }}
+            </td>
+
+            <td>
+              {{
+                getCreatedAt(log) ? (getCreatedAt(log) | date: "short") : "N/A"
+              }}
+            </td>
+
+            <td class="text-end">
+              <a
+                *ngIf="hasEmailId(log); else noEmailAction"
+                class="view-email-btn"
+                [routerLink]="['/emails', getEmailId(log)]"
+              >
+                View Email
+                <i class="bi bi-arrow-right"></i>
+              </a>
+
+              <ng-template #noEmailAction>
+                <span class="no-action">N/A</span>
+              </ng-template>
+            </td>
+          </tr>
+
+          <tr *ngIf="!filteredLogs.length && !loading">
+            <td colspan="7" class="empty-row">
+              <i class="bi bi-journal-check"></i>
+              <strong>No audit logs found</strong>
+              <span>Scan an email to generate audit events.</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

@@ -28,7 +28,7 @@
           <span>Flagged Emails</span>
         </a>
 
-        <a routerLink="/audit-logs" routerLinkActive="active">
+        <a *ngIf="isAdmin()" routerLink="/audit-logs" routerLinkActive="active">
           <i class="bi bi-clock-history"></i>
           <span>Audit Logs</span>
         </a>
@@ -41,8 +41,8 @@
           </div>
 
           <div>
-            <strong>{{ getUserEmail() || 'User' }}</strong>
-            <span>{{ getUserRole() || 'USER' }}</span>
+            <strong>{{ getUserEmail() || "User" }}</strong>
+            <span>{{ getUserRole() || "USER" }}</span>
           </div>
         </div>
 

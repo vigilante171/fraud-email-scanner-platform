@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
@@ -9,6 +9,7 @@ export interface EmailScanRequest {
   subject: string;
   body: string;
   receivedAt: string;
+  userId?: number;
 }
 
 export interface ScanResponse {
@@ -31,8 +32,15 @@ export interface ScanResponse {
   finalRiskScore?: number;
 }
 
+export interface FeedbackRequest {
+  emailId: number;
+  userId?: number | null;
+  label: string;
+  comment?: string;
+}
+
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ScannerService {
   private readonly apiUrl = environment.apiUrl;
@@ -40,22 +48,52 @@ export class ScannerService {
   constructor(private http: HttpClient) {}
 
   scanEmail(payload: EmailScanRequest): Observable<ScanResponse> {
-    return this.http.post<ScanResponse>(`${this.apiUrl}/api/emails/scan`, payload);
+    return this.http.post<ScanResponse>(
+      `${this.apiUrl}/api/emails/scan`,
+      payload,
+    );
   }
 
   getAllEmails(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/emails`);
+    return this.http.get<any[]>(`${this.apiUrl}/api/emails`, {
+      params: this.getUserAccessParams(),
+    });
   }
 
   getFlaggedEmails(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/emails/flagged`);
+    return this.http.get<any[]>(`${this.apiUrl}/api/emails/flagged`, {
+      params: this.getUserAccessParams(),
+    });
   }
 
   getEmailDetails(emailId: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/api/emails/${emailId}`);
+    return this.http.get<any>(`${this.apiUrl}/api/emails/${emailId}`, {
+      params: this.getUserAccessParams(),
+    });
   }
 
   getEmailsByStatus(status: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/emails/status/${status}`);
+    return this.http.get<any[]>(`${this.apiUrl}/api/emails/status/${status}`, {
+      params: this.getUserAccessParams(),
+    });
+  }
+
+  submitFeedback(payload: FeedbackRequest): Observable<string> {
+    return this.http.post(`${this.apiUrl}/api/feedback`, payload, {
+      responseType: 'text',
+    });
+  }
+
+  private getUserAccessParams(): HttpParams {
+    const userId = localStorage.getItem('userId');
+    const role = localStorage.getItem('role') || 'USER';
+
+    let params = new HttpParams().set('role', role);
+
+    if (userId) {
+      params = params.set('userId', userId);
+    }
+
+    return params;
   }
 }

@@ -25,10 +25,13 @@ public class EmailMessage {
     private String receiverEmail;
 
     @Column(nullable = false)
-    private String subject;   // ✅ Added subject field
+    private String subject;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String body;
+
+    @Column(name = "user_id")
+    private Long userId;
 
     @Builder.Default
     private LocalDateTime receivedAt = LocalDateTime.now();

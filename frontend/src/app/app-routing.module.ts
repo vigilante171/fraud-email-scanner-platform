@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-
+import { AdminGuard } from './core/guards/admin.guard';
 import { LoginComponent } from './features/auth/login/login.component';
 import { RegisterComponent } from './features/auth/register/register.component';
 import { DashboardComponent } from './features/dashboard/dashboard/dashboard.component';
@@ -17,12 +17,6 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent },
 
   {
-    path: '',
-    component: DashboardComponent,
-    canActivate: [AuthGuard],
-  },
-
-  {
     path: 'dashboard',
     component: DashboardComponent,
     canActivate: [AuthGuard],
@@ -32,7 +26,11 @@ const routes: Routes = [
     component: ScanEmailComponent,
     canActivate: [AuthGuard],
   },
-  { path: 'emails', component: EmailListComponent, canActivate: [AuthGuard] },
+  {
+    path: 'emails',
+    component: EmailListComponent,
+    canActivate: [AuthGuard],
+  },
   {
     path: 'emails/:id',
     component: EmailDetailsComponent,
@@ -41,7 +39,7 @@ const routes: Routes = [
   {
     path: 'audit-logs',
     component: AuditLogsComponent,
-    canActivate: [AuthGuard],
+    canActivate: [AuthGuard, AdminGuard],
   },
 
   { path: '**', redirectTo: 'dashboard' },

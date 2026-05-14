@@ -21,9 +21,10 @@ public class EmailController {
     private final EmailScanService emailScanService;
     private final EmailQueryService emailQueryService;
 
-
-    public EmailController(EmailScanService emailScanService,
-                           EmailQueryService emailQueryService) {
+    public EmailController(
+            EmailScanService emailScanService,
+            EmailQueryService emailQueryService
+    ) {
         this.emailScanService = emailScanService;
         this.emailQueryService = emailQueryService;
     }
@@ -34,23 +35,37 @@ public class EmailController {
     }
 
     @GetMapping
-    public ResponseEntity<List<EmailSummaryResponse>> getAllEmails() {
-        return ResponseEntity.ok(emailQueryService.getAllEmails());
+    public ResponseEntity<List<EmailSummaryResponse>> getAllEmails(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false, defaultValue = "USER") String role
+    ) {
+        return ResponseEntity.ok(emailQueryService.getAllEmails(userId, role));
     }
 
     @GetMapping("/flagged")
-    public ResponseEntity<List<EmailSummaryResponse>> getFlaggedEmails() {
-        return ResponseEntity.ok(emailQueryService.getFlaggedEmails());
+    public ResponseEntity<List<EmailSummaryResponse>> getFlaggedEmails(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false, defaultValue = "USER") String role
+    ) {
+        return ResponseEntity.ok(emailQueryService.getFlaggedEmails(userId, role));
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<EmailSummaryResponse>> getEmailsByStatus(@PathVariable EmailStatus status) {
-        return ResponseEntity.ok(emailQueryService.getEmailsByStatus(status));
+    public ResponseEntity<List<EmailSummaryResponse>> getEmailsByStatus(
+            @PathVariable EmailStatus status,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false, defaultValue = "USER") String role
+    ) {
+        return ResponseEntity.ok(emailQueryService.getEmailsByStatus(status, userId, role));
     }
 
     @GetMapping("/{emailId}")
-    public ResponseEntity<EmailDetailsResponse> getEmailDetails(@PathVariable Long emailId) {
-        return ResponseEntity.ok(emailQueryService.getEmailDetails(emailId));
+    public ResponseEntity<EmailDetailsResponse> getEmailDetails(
+            @PathVariable Long emailId,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false, defaultValue = "USER") String role
+    ) {
+        return ResponseEntity.ok(emailQueryService.getEmailDetails(emailId, userId, role));
     }
 
     @GetMapping("/health")

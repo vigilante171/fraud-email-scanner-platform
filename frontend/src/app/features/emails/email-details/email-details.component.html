@@ -3,7 +3,10 @@
     <div>
       <span class="eyebrow">Threat Investigation</span>
       <h1>Email Details</h1>
-      <p>Review the full scanned email content, sender metadata, and detection reasons.</p>
+      <p>
+        Review the scanned email, detection score, reasons, and submit human
+        feedback.
+      </p>
     </div>
 
     <a routerLink="/emails" class="back-btn">
@@ -27,53 +30,66 @@
         <div class="email-header">
           <div>
             <span class="status-pill" [ngClass]="getStatusClass()">
-              {{ value('status', 'scanResult.status') }}
+              {{ value("status", "scanResult.status") }}
             </span>
 
-            <h2>{{ value('subject', 'email.subject') }}</h2>
+            <h2>{{ value("subject", "email.subject") }}</h2>
           </div>
 
           <div class="score-box">
             <span>Risk Score</span>
-            <strong>{{ value('riskScore', 'scanResult.riskScore') }}</strong>
+            <strong>{{ getRiskScore() }}</strong>
           </div>
         </div>
 
         <div class="meta-grid">
           <div>
             <span>Sender</span>
-            <strong>{{ value('sender', 'senderEmail', 'email.sender') }}</strong>
+            <strong>{{
+              value("sender", "senderEmail", "email.sender")
+            }}</strong>
           </div>
 
           <div>
             <span>Receiver</span>
-            <strong>{{ value('receiverEmail', 'email.receiverEmail') }}</strong>
+            <strong>{{ value("receiverEmail", "email.receiverEmail") }}</strong>
           </div>
 
           <div>
             <span>Risk Level</span>
-            <strong>{{ value('riskLevel', 'scanResult.riskLevel') }}</strong>
+            <strong>{{ value("riskLevel", "scanResult.riskLevel") }}</strong>
           </div>
 
           <div>
             <span>Received At</span>
-            <strong>{{ value('receivedAt', 'email.receivedAt') | date:'short' }}</strong>
+            <strong>{{
+              value("receivedAt", "email.receivedAt") | date: "short"
+            }}</strong>
           </div>
         </div>
 
         <div class="body-box">
-          <h3>Email Body</h3>
-          <pre>{{ value('body', 'email.body') }}</pre>
+          <div class="body-header">
+            <h3>Email Body</h3>
+            <span>Email #{{ value("id", "emailId") }}</span>
+          </div>
+
+          <pre>{{ value("body", "email.body") }}</pre>
         </div>
       </article>
 
       <aside class="details-card side-panel">
-        <h3>Detection Reasons</h3>
+        <div class="side-title">
+          <div>
+            <h3>Detection Reasons</h3>
+            <p>Signals used by the scanner to classify this email.</p>
+          </div>
+        </div>
 
         <ul *ngIf="reasons().length; else noReasons">
           <li *ngFor="let reason of reasons()">
             <i class="bi bi-exclamation-circle-fill"></i>
-            {{ reason }}
+            <span>{{ reason }}</span>
           </li>
         </ul>
 
@@ -84,20 +100,81 @@
         <div class="mini-info">
           <div>
             <span>Email ID</span>
-            <strong>#{{ value('id', 'emailId') }}</strong>
+            <strong>#{{ value("id", "emailId") }}</strong>
           </div>
 
           <div>
             <span>Scan ID</span>
-            <strong>#{{ value('scanId', 'scanResult.id') }}</strong>
+            <strong>#{{ value("scanId", "scanResult.id") }}</strong>
           </div>
 
           <div>
             <span>Scanned At</span>
-            <strong>{{ value('scannedAt', 'scanResult.scannedAt') | date:'short' }}</strong>
+            <strong>{{
+              value("scannedAt", "scanResult.scannedAt") | date: "short"
+            }}</strong>
           </div>
         </div>
       </aside>
     </div>
+
+    <article class="feedback-card">
+      <div class="feedback-header">
+        <div>
+          <span class="feedback-eyebrow">Human Feedback</span>
+          <h3>Validate Scanner Decision</h3>
+          <p>{{ getFeedbackHint() }}</p>
+        </div>
+
+        <div class="feedback-icon">
+          <i class="bi bi-chat-square-check-fill"></i>
+        </div>
+      </div>
+
+      <div *ngIf="feedbackSuccessMessage" class="feedback-alert success">
+        <i class="bi bi-check-circle-fill"></i>
+        <span>{{ feedbackSuccessMessage }}</span>
+      </div>
+
+      <div *ngIf="feedbackErrorMessage" class="feedback-alert danger">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span>{{ feedbackErrorMessage }}</span>
+      </div>
+
+      <div class="feedback-comment">
+        <label>Optional comment</label>
+        <textarea
+          [(ngModel)]="feedbackComment"
+          placeholder="Example: This email was actually safe, it is a known newsletter."
+        ></textarea>
+      </div>
+
+      <div class="feedback-actions">
+        <button
+          class="feedback-btn confirm-fraud"
+          type="button"
+          [disabled]="feedbackLoading"
+          (click)="submitFeedback('CONFIRMED_FRAUD')"
+        >
+          <i class="bi bi-shield-fill-exclamation"></i>
+          Confirm Fraud
+        </button>
+
+        <button
+          class="feedback-btn false-positive"
+          type="button"
+          [disabled]="feedbackLoading"
+          (click)="submitFeedback('FALSE_POSITIVE')"
+        >
+          <i class="bi bi-shield-check"></i>
+          Mark as False Positive
+        </button>
+      </div>
+
+      <div *ngIf="feedbackLoading" class="feedback-loading">
+        <span class="spinner-border spinner-border-sm me-2"></span>
+        Submitting feedback...
+      </div>
+    </article>
   </ng-container>
 </section>

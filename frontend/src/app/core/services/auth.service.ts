@@ -6,6 +6,8 @@ import { environment } from '../../../environments/environment';
 
 interface AuthResponse {
   token: string;
+  userId?: number;
+  fullName?: string;
   email?: string;
   role?: string;
 }
@@ -27,9 +29,19 @@ export class AuthService {
       .pipe(
         tap((response) => {
           localStorage.setItem('token', response.token);
+
+          if (response.userId !== undefined && response.userId !== null) {
+            localStorage.setItem('userId', String(response.userId));
+          }
+
           if (response.email) {
             localStorage.setItem('email', response.email);
           }
+
+          if (response.fullName) {
+            localStorage.setItem('fullName', response.fullName);
+          }
+
           if (response.role) {
             localStorage.setItem('role', response.role);
           }
@@ -41,6 +53,7 @@ export class AuthService {
     fullName: string;
     email: string;
     password: string;
+    role?: string;
   }): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(
       `${this.apiUrl}/api/auth/register`,
@@ -50,6 +63,15 @@ export class AuthService {
 
   getToken(): string | null {
     return localStorage.getItem('token');
+  }
+
+  getUserId(): number | null {
+    const value = localStorage.getItem('userId');
+    return value ? Number(value) : null;
+  }
+
+  getRole(): string {
+    return localStorage.getItem('role') || 'USER';
   }
 
   isLoggedIn(): boolean {

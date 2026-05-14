@@ -16,6 +16,7 @@ import com.fraudscanner.scannerservice.repository.EmailMessageRepository;
 import com.fraudscanner.scannerservice.repository.ScanResultRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,18 +45,19 @@ public class EmailScanService {
 
     public ScanResponse scanEmail(EmailScanRequest request) {
 
-        // 1. Save email message
         EmailMessage savedEmail = emailMessageRepository.save(
                 EmailMessage.builder()
                         .sender(request.getSender())
                         .receiverEmail(request.getReceiverEmail())
                         .subject(request.getSubject())
                         .body(request.getBody())
-                        .receivedAt(request.getReceivedAt())
+                        .userId(request.getUserId())
+                        .receivedAt(request.getReceivedAt() != null
+                                ? request.getReceivedAt()
+                                : LocalDateTime.now())
                         .build()
         );
 
-        // 2. Run rule-based detection
         RuleDetectionService.DetectionResult detectionResult = ruleDetectionService.analyze(
                 request.getSender(),
                 request.getSubject(),
@@ -64,7 +66,6 @@ public class EmailScanService {
 
         int ruleRiskScore = detectionResult.getRiskScore();
 
-        // 3. Call ML service
         MlPredictionResponse mlPrediction = mlServiceClient.predict(
                 MlPredictionRequest.builder()
                         .sender(request.getSender())
@@ -73,7 +74,6 @@ public class EmailScanService {
                         .build()
         );
 
-        // 4. Combine rule score + ML score
         int finalRiskScore = calculateFinalRiskScore(
                 ruleRiskScore,
                 mlPrediction.getFraudProbability()
@@ -82,7 +82,6 @@ public class EmailScanService {
         EmailStatus finalStatus = calculateFinalStatus(finalRiskScore);
         RiskLevel finalRiskLevel = calculateFinalRiskLevel(finalRiskScore);
 
-        // 5. Merge rule reasons + ML reasons
         List<String> combinedReasons = new ArrayList<>();
 
         if (detectionResult.getReasons() != null) {
@@ -97,7 +96,6 @@ public class EmailScanService {
 
         String reasonsAsText = String.join(" | ", combinedReasons);
 
-        // 6. Save final scan result
         ScanResult savedScanResult = scanResultRepository.save(
                 ScanResult.builder()
                         .riskScore(finalRiskScore)
@@ -108,10 +106,9 @@ public class EmailScanService {
                         .build()
         );
 
-        // 7. Send audit log
         AuditLogRequest auditLogRequest = AuditLogRequest.builder()
                 .emailId(savedEmail.getId())
-                .userId(null)
+                .userId(request.getUserId())
                 .eventType(finalStatus == EmailStatus.FLAGGED
                         ? AuditEventType.EMAIL_FLAGGED
                         : AuditEventType.EMAIL_SCANNED)
@@ -123,29 +120,21 @@ public class EmailScanService {
 
         auditServiceClient.createAuditLog(auditLogRequest);
 
-        // 8. Return enhanced response to frontend
         return ScanResponse.builder()
                 .emailId(savedEmail.getId())
                 .scanId(savedScanResult.getId())
-
-                // final decision
                 .status(finalStatus)
                 .riskLevel(finalRiskLevel)
                 .riskScore(finalRiskScore)
                 .reasons(combinedReasons)
                 .scannedAt(savedScanResult.getScannedAt())
-
-                // ML fields
                 .mlFraudProbability(mlPrediction.getFraudProbability())
                 .mlPrediction(mlPrediction.getPrediction())
                 .mlRiskLevel(mlPrediction.getRiskLevel())
                 .mlModelVersion(mlPrediction.getModelVersion())
                 .mlReasons(mlPrediction.getReasons())
-
-                // scoring fields
                 .ruleRiskScore(ruleRiskScore)
                 .finalRiskScore(finalRiskScore)
-
                 .build();
     }
 
@@ -154,7 +143,6 @@ public class EmailScanService {
                 ? 0
                 : (int) Math.round(mlProbability * 100);
 
-        // 60% rule engine + 40% ML prediction
         return (int) Math.round((ruleScore * 0.6) + (mlScore * 0.4));
     }
 
