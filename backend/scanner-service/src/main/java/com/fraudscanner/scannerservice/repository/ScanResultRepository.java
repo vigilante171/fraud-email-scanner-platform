@@ -5,13 +5,13 @@ import com.fraudscanner.scannerservice.enums.EmailStatus;
 import com.fraudscanner.scannerservice.enums.RiskLevel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface ScanResultRepository extends JpaRepository<ScanResult, Long> {
+
     List<ScanResult> findByEmailMessageUserId(Long userId);
 
     Optional<ScanResult> findByEmailMessageId(Long emailId);
@@ -61,8 +61,6 @@ public interface ScanResultRepository extends JpaRepository<ScanResult, Long> {
            """)
     List<Object[]> findTopFlaggedSenders();
 
-    // Newly added method
     @Transactional
-    @Modifying
     void deleteByEmailMessageId(Long emailId);
 }

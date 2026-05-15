@@ -21,8 +21,26 @@ export class LayoutComponent {
     return localStorage.getItem('email');
   }
 
+  getFullName(): string | null {
+    return localStorage.getItem('fullName');
+  }
+
   getUserRole(): string | null {
     return localStorage.getItem('role');
+  }
+
+  getProfilePictureUrl(): string | null {
+    const url = localStorage.getItem('profilePictureUrl');
+
+    if (!url) {
+      return null;
+    }
+
+    if (url.startsWith('http')) {
+      return url;
+    }
+
+    return `http://localhost:8081${url}`;
   }
 
   logout(): void {

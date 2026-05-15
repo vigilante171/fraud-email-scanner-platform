@@ -10,4 +10,6 @@ public interface UserFeedbackRepository extends JpaRepository<UserFeedback, Long
     List<UserFeedback> findByEmailMessageId(Long emailId);
 
     List<UserFeedback> findByUserId(Long userId);
+
+    void deleteByEmailMessageId(Long emailId);
 }

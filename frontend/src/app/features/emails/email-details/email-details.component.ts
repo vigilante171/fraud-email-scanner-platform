@@ -1,6 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { ScannerService } from '../../../core/services/scanner.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import {
+  ScannerService,
+  UpdateEmailRequest,
+} from '../../../core/services/scanner.service';
 
 @Component({
   selector: 'app-email-details',
@@ -12,14 +15,28 @@ export class EmailDetailsComponent implements OnInit {
 
   loading = false;
   errorMessage = '';
+  successMessage = '';
 
   feedbackLoading = false;
   feedbackSuccessMessage = '';
   feedbackErrorMessage = '';
   feedbackComment = '';
 
+  editMode = false;
+  editLoading = false;
+  deleteLoading = false;
+  showDeleteModal = false;
+
+  editForm: UpdateEmailRequest = {
+    sender: '',
+    receiverEmail: '',
+    subject: '',
+    body: '',
+  };
+
   constructor(
     private route: ActivatedRoute,
+    private router: Router,
     private scannerService: ScannerService,
   ) {}
 
@@ -37,6 +54,7 @@ export class EmailDetailsComponent implements OnInit {
   loadEmailDetails(emailId: number): void {
     this.loading = true;
     this.errorMessage = '';
+    this.successMessage = '';
 
     this.scannerService.getEmailDetails(emailId).subscribe({
       next: (data) => {
@@ -45,8 +63,121 @@ export class EmailDetailsComponent implements OnInit {
       },
       error: (error) => {
         console.error('Email details error:', error);
-        this.errorMessage = 'Failed to load email details.';
+
+        if (error.status === 404 || error.status === 500) {
+          this.errorMessage =
+            'This email no longer exists or its scan result was deleted.';
+        } else {
+          this.errorMessage = 'Failed to load email details.';
+        }
+
         this.loading = false;
+      },
+    });
+  }
+
+  isAdmin(): boolean {
+    return localStorage.getItem('role') === 'ADMIN';
+  }
+
+  startEdit(): void {
+    if (!this.isAdmin()) {
+      return;
+    }
+
+    this.editMode = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.editForm = {
+      sender: this.value('sender', 'senderEmail', 'email.sender'),
+      receiverEmail: this.value('receiverEmail', 'email.receiverEmail'),
+      subject: this.value('subject', 'email.subject'),
+      body: this.value('body', 'email.body'),
+    };
+  }
+
+  cancelEdit(): void {
+    this.editMode = false;
+    this.editLoading = false;
+  }
+
+  saveEmailChanges(): void {
+    const emailId = Number(this.value('id', 'emailId', 'email.id'));
+
+    if (!emailId) {
+      this.errorMessage = 'Cannot update email: invalid email ID.';
+      return;
+    }
+
+    this.editLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.scannerService.updateEmail(emailId, this.editForm).subscribe({
+      next: (updatedEmail) => {
+        this.email = updatedEmail;
+        this.editMode = false;
+        this.editLoading = false;
+        this.successMessage = 'Email updated successfully.';
+      },
+      error: (error) => {
+        console.error('Update email error:', error);
+        this.errorMessage =
+          'Failed to update email. Admin permission may be missing.';
+        this.editLoading = false;
+      },
+    });
+  }
+
+  openDeleteModal(): void {
+    if (!this.isAdmin()) {
+      return;
+    }
+
+    this.showDeleteModal = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+  }
+
+  closeDeleteModal(): void {
+    if (this.deleteLoading) {
+      return;
+    }
+
+    this.showDeleteModal = false;
+  }
+
+  confirmDeleteEmail(): void {
+    const emailId = Number(this.value('id', 'emailId', 'email.id'));
+
+    if (!emailId) {
+      this.errorMessage = 'Cannot delete email: invalid email ID.';
+      this.showDeleteModal = false;
+      return;
+    }
+
+    this.deleteLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.scannerService.deleteEmail(emailId).subscribe({
+      next: () => {
+        this.deleteLoading = false;
+        this.showDeleteModal = false;
+
+        this.router.navigate(['/emails'], {
+          queryParams: {
+            refresh: Date.now(),
+          },
+        });
+      },
+      error: (error) => {
+        console.error('Delete email error:', error);
+        this.errorMessage =
+          'Failed to delete email. Admin permission may be missing.';
+        this.deleteLoading = false;
+        this.showDeleteModal = false;
       },
     });
   }
@@ -66,7 +197,7 @@ export class EmailDetailsComponent implements OnInit {
     this.scannerService
       .submitFeedback({
         emailId,
-        userId: null,
+        userId: Number(localStorage.getItem('userId')) || null,
         label,
         comment: this.feedbackComment,
       })

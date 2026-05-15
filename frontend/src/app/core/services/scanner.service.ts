@@ -36,6 +36,13 @@ export interface FeedbackRequest {
   comment?: string;
 }
 
+export interface UpdateEmailRequest {
+  sender: string;
+  receiverEmail: string;
+  subject: string;
+  body: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -44,7 +51,6 @@ export class ScannerService {
 
   constructor(private http: HttpClient) {}
 
-  // Existing email‑related methods
   scanEmail(payload: EmailScanRequest): Observable<ScanResponse> {
     return this.http.post<ScanResponse>(
       `${this.apiUrl}/api/emails/scan`,
@@ -76,30 +82,38 @@ export class ScannerService {
     });
   }
 
+  updateEmail(emailId: number, payload: UpdateEmailRequest): Observable<any> {
+    return this.http.put<any>(
+      `${this.apiUrl}/api/emails/${emailId}`,
+      payload,
+      {
+        params: this.getUserAccessParams(),
+      },
+    );
+  }
+
+  deleteEmail(emailId: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/api/emails/${emailId}`, {
+      params: this.getUserAccessParams(),
+    });
+  }
+
   submitFeedback(payload: FeedbackRequest): Observable<string> {
     return this.http.post(`${this.apiUrl}/api/feedback`, payload, {
       responseType: 'text',
     });
   }
 
-  // 🆕 Admin‑level endpoints (parallel to admin routes)
-  getAuditLogs(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/audit-logs`, {
-      params: this.getUserAccessParams(),
-    });
-  }
-
-  getAllUsers(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}/api/admin/users`, {
-      params: this.getUserAccessParams(),
-    });
-  }
-
   private getUserAccessParams(): HttpParams {
     const userId = localStorage.getItem('userId');
     const role = localStorage.getItem('role') || 'USER';
+
     let params = new HttpParams().set('role', role);
-    if (userId) params = params.set('userId', userId);
+
+    if (userId) {
+      params = params.set('userId', userId);
+    }
+
     return params;
   }
 }

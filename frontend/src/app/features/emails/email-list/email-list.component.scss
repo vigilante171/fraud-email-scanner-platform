@@ -34,7 +34,8 @@
 
 .refresh-btn,
 .new-scan-btn,
-.details-btn {
+.details-btn,
+.delete-email-btn {
   border: 0;
   border-radius: 999px;
   font-weight: 900;
@@ -199,14 +200,35 @@
   font-weight: 850;
 }
 
-.details-btn {
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.details-btn,
+.delete-email-btn {
   height: 36px;
   display: inline-flex;
   align-items: center;
   gap: 7px;
   padding: 0 14px;
+}
+
+.details-btn {
   color: #0369a1;
   background: #e0f2fe;
+}
+
+.delete-email-btn {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.delete-email-btn:hover {
+  color: #ffffff;
+  background: #dc2626;
 }
 
 .empty-row {
@@ -233,6 +255,146 @@
   margin-top: 6px;
 }
 
+.delete-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(2, 6, 23, 0.62);
+  backdrop-filter: blur(10px);
+}
+
+.delete-modal {
+  width: min(520px, 100%);
+  padding: 28px;
+  border-radius: 30px;
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow:
+    0 40px 90px rgba(2, 6, 23, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  animation: modalPop 0.22s ease-out;
+}
+
+@keyframes modalPop {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.delete-modal-icon {
+  width: 70px;
+  height: 70px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 18px;
+  border-radius: 24px;
+  color: #dc2626;
+  background: #fee2e2;
+  font-size: 30px;
+  box-shadow: 0 0 0 8px rgba(239, 68, 68, 0.08);
+}
+
+.delete-modal-content {
+  text-align: center;
+}
+
+.modal-eyebrow {
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.delete-modal-content h3 {
+  margin: 8px 0 0;
+  color: #0f172a;
+  font-size: 28px;
+  font-weight: 950;
+  letter-spacing: -0.045em;
+}
+
+.delete-modal-content p {
+  margin: 14px auto 0;
+  max-width: 420px;
+  color: #64748b;
+  line-height: 1.7;
+  font-weight: 650;
+}
+
+.delete-modal-content p strong {
+  color: #0f172a;
+}
+
+.modal-email-preview {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 18px;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.modal-email-preview span {
+  display: block;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.modal-email-preview strong {
+  display: block;
+  margin-top: 5px;
+  color: #0f172a;
+  font-weight: 950;
+  overflow-wrap: anywhere;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.modal-cancel-btn,
+.modal-delete-btn {
+  height: 48px;
+  flex: 1;
+  border: 0;
+  border-radius: 999px;
+  font-weight: 950;
+  transition: 0.2s ease;
+}
+
+.modal-cancel-btn {
+  color: #334155;
+  background: #e2e8f0;
+}
+
+.modal-delete-btn {
+  color: #ffffff;
+  background: linear-gradient(135deg, #991b1b, #dc2626);
+  box-shadow: 0 16px 28px rgba(220, 38, 38, 0.24);
+}
+
+.modal-delete-btn span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 @media (max-width: 760px) {
   .page-heading,
   .toolbar {
@@ -243,5 +405,16 @@
   .search-box {
     max-width: 100%;
     width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .delete-modal {
+    padding: 22px;
+    border-radius: 24px;
+  }
+
+  .delete-modal-actions {
+    flex-direction: column;
   }
 }

@@ -33,6 +33,10 @@
     {{ errorMessage }}
   </div>
 
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+
   <div *ngIf="loading" class="loading-card">
     <span class="spinner-border spinner-border-sm me-2"></span>
     Loading flagged emails...
@@ -82,13 +86,24 @@
               </div>
             </td>
 
-            <td>{{ getDate(email) | date:'short' }}</td>
+            <td>{{ getDate(email) | date: 'short' }}</td>
 
             <td class="text-end">
-              <a class="details-btn" [routerLink]="['/emails', getId(email)]">
-                Details
-                <i class="bi bi-arrow-right"></i>
-              </a>
+              <div class="action-buttons">
+                <a class="details-btn" [routerLink]="['/emails', getId(email)]">
+                  Details
+                  <i class="bi bi-arrow-right"></i>
+                </a>
+
+                <button
+                  *ngIf="isAdmin()"
+                  class="delete-email-btn"
+                  type="button"
+                  (click)="openDeleteModal(email)"
+                >
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
 
@@ -103,4 +118,56 @@
       </table>
     </div>
   </article>
+
+  <div class="delete-modal-backdrop" *ngIf="showDeleteModal">
+    <div class="delete-modal">
+      <div class="delete-modal-icon">
+        <i class="bi bi-trash-fill"></i>
+      </div>
+
+      <div class="delete-modal-content">
+        <span class="modal-eyebrow">Danger Zone</span>
+        <h3>Delete this email?</h3>
+
+        <p>
+          You are about to permanently delete
+          <strong>Email #{{ getId(selectedEmailToDelete) }}</strong>.
+          This will remove its scan result and feedback records.
+        </p>
+
+        <div class="modal-email-preview">
+          <span>Subject</span>
+          <strong>{{ getSubject(selectedEmailToDelete) }}</strong>
+        </div>
+      </div>
+
+      <div class="delete-modal-actions">
+        <button
+          class="modal-cancel-btn"
+          type="button"
+          [disabled]="deleting"
+          (click)="closeDeleteModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="modal-delete-btn"
+          type="button"
+          [disabled]="deleting"
+          (click)="confirmDeleteEmail()"
+        >
+          <span *ngIf="!deleting">
+            <i class="bi bi-trash-fill"></i>
+            Yes, delete
+          </span>
+
+          <span *ngIf="deleting">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Deleting...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
 </section>

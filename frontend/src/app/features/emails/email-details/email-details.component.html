@@ -4,15 +4,38 @@
       <span class="eyebrow">Threat Investigation</span>
       <h1>Email Details</h1>
       <p>
-        Review the scanned email, detection score, reasons, and submit human
-        feedback.
+        Review the scanned email, detection result, risk score, reasons, and
+        human feedback.
       </p>
     </div>
 
-    <a routerLink="/emails" class="back-btn">
-      <i class="bi bi-arrow-left"></i>
-      Back to Emails
-    </a>
+    <div class="heading-actions">
+      <a routerLink="/emails" class="back-btn">
+        <i class="bi bi-arrow-left"></i>
+        Back to Emails
+      </a>
+
+      <button
+        *ngIf="isAdmin() && email && !editMode"
+        class="admin-edit-btn"
+        type="button"
+        (click)="startEdit()"
+      >
+        <i class="bi bi-pencil-square"></i>
+        Edit Email
+      </button>
+
+      <button
+        *ngIf="isAdmin() && email"
+        class="admin-delete-btn"
+        type="button"
+        [disabled]="deleteLoading"
+        (click)="openDeleteModal()"
+      >
+        <i class="bi bi-trash-fill"></i>
+        Delete Email
+      </button>
+    </div>
   </div>
 
   <div *ngIf="loading" class="loading-card">
@@ -24,21 +47,116 @@
     {{ errorMessage }}
   </div>
 
-  <ng-container *ngIf="email && !loading">
-    <div class="details-grid">
-      <article class="details-card main-email">
-        <div class="email-header">
-          <div>
-            <span class="status-pill" [ngClass]="getStatusClass()">
-              {{ value("status", "scanResult.status") }}
-            </span>
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
 
-            <h2>{{ value("subject", "email.subject") }}</h2>
+  <ng-container *ngIf="email && !loading">
+    <article *ngIf="editMode && isAdmin()" class="edit-email-card">
+      <div class="section-header">
+        <div>
+          <span class="section-label warning">Admin Action</span>
+          <h3>Edit Email #{{ value("id", "emailId") }}</h3>
+          <p>Update the email content linked to this scan result.</p>
+        </div>
+
+        <div class="section-icon warning-icon">
+          <i class="bi bi-pencil-square"></i>
+        </div>
+      </div>
+
+      <form class="edit-email-form" (ngSubmit)="saveEmailChanges()">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sender</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="editForm.sender"
+              name="sender"
+              required
+            />
           </div>
 
-          <div class="score-box">
-            <span>Risk Score</span>
-            <strong>{{ getRiskScore() }}</strong>
+          <div class="form-group">
+            <label>Receiver</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="editForm.receiverEmail"
+              name="receiverEmail"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Subject</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="editForm.subject"
+            name="subject"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Body</label>
+          <textarea
+            class="form-control edit-body"
+            [(ngModel)]="editForm.body"
+            name="body"
+            required
+          ></textarea>
+        </div>
+
+        <div class="edit-actions">
+          <button class="save-edit-btn" type="submit" [disabled]="editLoading">
+            <i class="bi bi-check-circle-fill"></i>
+            {{ editLoading ? "Saving..." : "Save Changes" }}
+          </button>
+
+          <button class="cancel-edit-btn" type="button" (click)="cancelEdit()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </article>
+
+    <div class="overview-card">
+      <div class="overview-left">
+        <span class="status-pill" [ngClass]="getStatusClass()">
+          {{ value("status", "scanResult.status") }}
+        </span>
+
+        <h2>{{ value("subject", "email.subject") }}</h2>
+
+        <p>
+          Email #{{ value("id", "emailId") }} · Scan #{{
+            value("scanId", "scanResult.id")
+          }}
+        </p>
+      </div>
+
+      <div class="score-card">
+        <span>Risk Score</span>
+        <strong>{{ getRiskScore() }}</strong>
+        <small>{{ value("riskLevel", "scanResult.riskLevel") }}</small>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <article class="details-card main-email">
+        <div class="section-header">
+          <div>
+            <span class="section-label">Email Metadata</span>
+            <h3>Message Information</h3>
+            <p>Sender, receiver, timing, and original content.</p>
+          </div>
+
+          <div class="section-icon">
+            <i class="bi bi-envelope-paper-fill"></i>
           </div>
         </div>
 
@@ -71,7 +189,7 @@
         <div class="body-box">
           <div class="body-header">
             <h3>Email Body</h3>
-            <span>Email #{{ value("id", "emailId") }}</span>
+            <span>Original content</span>
           </div>
 
           <pre>{{ value("body", "email.body") }}</pre>
@@ -79,10 +197,11 @@
       </article>
 
       <aside class="details-card side-panel">
-        <div class="side-title">
+        <div class="section-header compact">
           <div>
+            <span class="section-label danger-label">Detection</span>
             <h3>Detection Reasons</h3>
-            <p>Signals used by the scanner to classify this email.</p>
+            <p>Signals used by the scanner.</p>
           </div>
         </div>
 
@@ -94,7 +213,10 @@
         </ul>
 
         <ng-template #noReasons>
-          <p class="text-muted">No detection reasons available.</p>
+          <div class="empty-reasons">
+            <i class="bi bi-check-circle"></i>
+            <span>No detection reasons available.</span>
+          </div>
         </ng-template>
 
         <div class="mini-info">
@@ -119,14 +241,14 @@
     </div>
 
     <article class="feedback-card">
-      <div class="feedback-header">
+      <div class="section-header">
         <div>
-          <span class="feedback-eyebrow">Human Feedback</span>
+          <span class="section-label">Human Feedback</span>
           <h3>Validate Scanner Decision</h3>
           <p>{{ getFeedbackHint() }}</p>
         </div>
 
-        <div class="feedback-icon">
+        <div class="section-icon">
           <i class="bi bi-chat-square-check-fill"></i>
         </div>
       </div>
@@ -177,4 +299,56 @@
       </div>
     </article>
   </ng-container>
+
+  <div class="delete-modal-backdrop" *ngIf="showDeleteModal">
+    <div class="delete-modal">
+      <div class="delete-modal-icon">
+        <i class="bi bi-trash-fill"></i>
+      </div>
+
+      <div class="delete-modal-content">
+        <span class="modal-eyebrow">Danger Zone</span>
+        <h3>Delete this email?</h3>
+
+        <p>
+          You are about to permanently delete
+          <strong>Email #{{ value("id", "emailId") }}</strong
+          >. This will also remove its scan result and feedback records.
+        </p>
+
+        <div class="modal-email-preview">
+          <span>Subject</span>
+          <strong>{{ value("subject", "email.subject") }}</strong>
+        </div>
+      </div>
+
+      <div class="delete-modal-actions">
+        <button
+          class="modal-cancel-btn"
+          type="button"
+          [disabled]="deleteLoading"
+          (click)="closeDeleteModal()"
+        >
+          Cancel
+        </button>
+
+        <button
+          class="modal-delete-btn"
+          type="button"
+          [disabled]="deleteLoading"
+          (click)="confirmDeleteEmail()"
+        >
+          <span *ngIf="!deleteLoading">
+            <i class="bi bi-trash-fill"></i>
+            Yes, delete
+          </span>
+
+          <span *ngIf="deleteLoading">
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Deleting...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
 </section>
